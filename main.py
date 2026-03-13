@@ -59,7 +59,7 @@ def tareas(tarea: Tarea) -> dict:
 
 @app.get("/usuarios/{usuario_id}")
 def  obtener_usuarios( usuario_id: int) -> dict:
-    #No se si con esto estoy hardcodeando al usuario
+    
     usuario = Usuario(nombre="nilo", email="elgato@miau.com", edad=4)
     return {"usuario_id": usuario_id, "datos": usuario.model_dump()}
 
