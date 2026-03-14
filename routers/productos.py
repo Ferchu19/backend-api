@@ -1,5 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
+from database import get_db
+from models import Producto
 
 
 router = APIRouter(
@@ -7,52 +10,59 @@ router = APIRouter(
     tags=["Productos"]
 )
 
-#Datos creado solo para pruebas
-productos_db = [
-    {"id": 1, "nombre": "remera", "precio": 12.2},
-    {"id": 2, "nombre": "short", "precio": 3.45},
-    {"id": 3, "nombre": "medias", "precio": 1.45}
-]
 
-
-class ProductoSchema(BaseModel):
+# Lo que recibe el cliente al crear
+class ProductoCreate(BaseModel):
     nombre: str
     precio: float
 
 
-@router.get("/")
-def mostrar_productos() -> list:
-    return productos_db
+# Lo que devuelve la API (incluye el id)
+class ProductoResponse(BaseModel):
+    id: int
+    nombre: str
+    precio: float
 
+    class Config:
+        from_attributes = True ## permite convertir objetos SQLAlchemy a JSON
 
-@router.get("/{producto_id}")
-def buscar_producto(producto_id: int) -> dict:
-    producto = next((u for u in productos_db if u["id"] == producto_id), None)
+# GET todos
+@router.get("/", response_model=list[ProductoResponse])
+def mostrar_productos(db: Session = Depends(get_db)):
+    return db.query(Producto).all()
+
+# GET uno
+@router.get("/{producto_id}", response_model=ProductoResponse)
+def buscar_producto(producto_id: int, db: Session = Depends(get_db)):
+    producto = db.query(Producto).filter(Producto.id == producto_id).first()
 
     if producto is None:
         raise HTTPException(status_code=404, detail="El producto no existe")
     
     return producto
 
+# POST crear
+@router.post("/", response_model=ProductoResponse, status_code=201)
+def crear_producto(producto: ProductoCreate, db: Session = Depends(get_db)):
+    nuevo_product = Producto(**producto.model_dump())
+    db.add(nuevo_product)
+    db.commit()
+    db.refresh(nuevo_product)
 
-@router.post("/", status_code=201)
-def crear_producto(producto: ProductoSchema) -> dict:
-    nuevo_product = {"id": len(productos_db) + 1, **producto.model_dump()}
-    productos_db.append(nuevo_product)
-    return {"mensaje": "producto creado", "datos": nuevo_product}  
+    return nuevo_product 
 
-
+# DELETE
 @router.delete("/{producto_id}")
-def eliminar_producto(producto_id: int) -> dict:
-    
-    for i, p in enumerate(productos_db):
-        if p["id"] == producto_id:
-            productos_db.pop(i)
-            return {"mensaje": "producto eliminado"}
+def eliminar_producto(producto_id: int, db: Session = Depends(get_db)):
+    producto = db.query(Producto).filter(Producto.id == producto_id).first()
 
-    raise HTTPException(
-        status_code=404,
-        detail="No existe el producto"
-    )
+    if not producto:
+        raise HTTPException(
+            status_code=404,
+            detail="No existe el producto"
+        )
 
+    db.delete(producto)
+    db.commit()
+    return {"mensaje": "Producto eliminado"}
 
