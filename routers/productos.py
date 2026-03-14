@@ -1,12 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+
 router = APIRouter(
     prefix="/productos",
     tags=["Productos"]
 )
 
-
+#Datos creado solo para pruebas
 productos_db = [
     {"id": 1, "nombre": "remera", "precio": 12.2},
     {"id": 2, "nombre": "short", "precio": 3.45},
@@ -14,7 +15,7 @@ productos_db = [
 ]
 
 
-class Producto(BaseModel):
+class ProductoSchema(BaseModel):
     nombre: str
     precio: float
 
@@ -35,7 +36,7 @@ def buscar_producto(producto_id: int) -> dict:
 
 
 @router.post("/", status_code=201)
-def crear_producto(producto: Producto) -> dict:
+def crear_producto(producto: ProductoSchema) -> dict:
     nuevo_product = {"id": len(productos_db) + 1, **producto.model_dump()}
     productos_db.append(nuevo_product)
     return {"mensaje": "producto creado", "datos": nuevo_product}  
