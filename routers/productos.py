@@ -16,6 +16,10 @@ class ProductoCreate(BaseModel):
     nombre: str
     precio: float
 
+# Lo que recibe el cliente al modificar un producto
+class ProductoUpdate(BaseModel):
+    nombre: str | None = None
+    precio: float | None = None
 
 # Lo que devuelve la API (incluye el id)
 class ProductoResponse(BaseModel):
@@ -66,3 +70,22 @@ def eliminar_producto(producto_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"mensaje": "Producto eliminado"}
 
+@router.put("/{producto_id}", response_model= ProductoResponse)
+def actualizar_producto(producto_id: int, datos: ProductoUpdate, db: Session = Depends(get_db)):
+    producto = db.query(Producto).filter(Producto.id == producto_id).first()
+
+    if not producto:
+        raise HTTPException(
+            status_code= 404, 
+            detail="Producto no encontrado"
+        )
+
+    #Solo actualizamos los campos que llegaron con valor
+    if datos.nombre is not None:
+        producto.nombre = datos.nombre
+    if datos.precio is not None:
+        producto.precio = datos.precio
+
+    db.commit()
+    db.refresh(producto)
+    return producto

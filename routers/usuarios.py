@@ -17,6 +17,12 @@ class UsuarioCreate(BaseModel):
     edad: int
     activo: bool = True
 
+class UsuarioUpdate(BaseModel):
+    nombre: str | None = None
+    email: str | None = None
+    edad: int | None = None
+    activo: bool | None = None
+
 
 class UsuarioResponse(BaseModel):
     id: int
@@ -70,3 +76,27 @@ def eliminar_usuario(usuario_id: int, db: Session = Depends(get_db)):
     db.delete(usuario)
     db.commit()
     return {"mensaje": "Usuario eliminado"}
+
+@router.put("/{usuario_id}", response_model= UsuarioResponse)
+def actualizar_usuario(usuario_id: int, datos: UsuarioUpdate, db: Session = Depends(get_db)):
+    usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
+
+    if not usuario: 
+        raise HTTPException(
+            status_code= 404, 
+            detail="Usuario no encontrado"
+        )
+    
+     #Solo actualizamos los campos que llegaron con valor
+    if datos.nombre is not None:
+        usuario.nombre = datos.nombre
+    if datos.email is not None:
+        usuario.email = datos.email
+    if datos.edad is not None:
+        usuario.edad = datos.edad
+    if datos.activo is not None:
+        usuario.activo = datos.activo
+
+    db.commit()
+    db.refresh(usuario)
+    return usuario
