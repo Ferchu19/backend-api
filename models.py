@@ -11,6 +11,7 @@ class Usuario(Base):
     email = Column(String, nullable=False, unique=True)
     edad = Column(Integer, nullable=False)
     activo = Column(Boolean, default=True)
+    password = Column(String, nullable=False)
 
 class Producto(Base):
     __tablename__ = "productos"

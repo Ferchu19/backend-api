@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from database import get_db
 from models import Usuario
+from security import hashear_password
 
 
 router = APIRouter(
@@ -16,6 +17,7 @@ class UsuarioCreate(BaseModel):
     email: str
     edad: int
     activo: bool = True
+    password: str
 
 class UsuarioUpdate(BaseModel):
     nombre: str | None = None
@@ -52,7 +54,9 @@ def obtener_usuario(usuario_id: int, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=UsuarioResponse, status_code=201)
 def crear_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
-    nuevo =  Usuario(**usuario.model_dump())
+    datos =  usuario.model_dump()
+    datos["password"] = hashear_password(datos["password"])
+    nuevo = Usuario(**datos)
     db.add(nuevo)
     try:
         db.commit()
