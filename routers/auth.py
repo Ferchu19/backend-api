@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database import get_db
@@ -21,9 +22,10 @@ class TokenResponse(BaseModel):
 
 
 @router.post("/login", response_model= TokenResponse)
-def login(datos: LoginRequest, db: Session = Depends(get_db)):
+def login(datos: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+
     #1- Buscar el usuarion por Email
-    usuario = db.query(Usuario).filter(Usuario.email == datos.email).first()
+    usuario = db.query(Usuario).filter(Usuario.email == datos.username).first()
 
     #2- Verifica que existe y que el password es correcto
     if not usuario or not verificar_password(datos.password, usuario.password):

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from database import get_db
 from models import Usuario
-from security import hashear_password
+from security import hashear_password, get_usuario_actual
 
 
 router = APIRouter(
@@ -41,6 +41,11 @@ class UsuarioResponse(BaseModel):
 def listar_usuario(db: Session =  Depends(get_db)):
     return db.query(Usuario).all()
 
+@router.get("/me", response_model=UsuarioResponse)
+def mi_perfil(usuario_actual: dict = Depends(get_usuario_actual), db: Session = Depends(get_db)):
+    usuario = db.query(Usuario).filter(Usuario.id == usuario_actual["id"]).first()
+    return usuario
+
 @router.get("/{usuario_id}", response_model=UsuarioResponse)
 def obtener_usuario(usuario_id: int, db: Session = Depends(get_db)):
     usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
@@ -70,7 +75,7 @@ def crear_usuario(usuario: UsuarioCreate, db: Session = Depends(get_db)):
     return nuevo
 
 @router.delete("/{usuario_id}")
-def eliminar_usuario(usuario_id: int, db: Session = Depends(get_db)):
+def eliminar_usuario(usuario_id: int, usuario_actual: dict= Depends(get_usuario_actual), db: Session = Depends(get_db)):
     usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
     if not usuario:
         raise HTTPException(
@@ -104,3 +109,4 @@ def actualizar_usuario(usuario_id: int, datos: UsuarioUpdate, db: Session = Depe
     db.commit()
     db.refresh(usuario)
     return usuario
+
