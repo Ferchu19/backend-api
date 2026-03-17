@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 # SQLite — el archivo se crea automático en la carpeta
 DATABASE_URL =  "sqlite:///./database.db"

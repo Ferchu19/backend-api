@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from database import get_db
@@ -27,14 +27,13 @@ class UsuarioUpdate(BaseModel):
 
 
 class UsuarioResponse(BaseModel):
+
+    model_config = ConfigDict(from_attributes=True)
     id: int
     nombre: str
     email: str
     edad: int
     activo: bool 
-
-    class Config:
-        from_attributes = True
 
 
 @router.get("/", response_model=list[UsuarioResponse])

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Producto
@@ -23,12 +23,11 @@ class ProductoUpdate(BaseModel):
 
 # Lo que devuelve la API (incluye el id)
 class ProductoResponse(BaseModel):
+
+    model_config = ConfigDict(from_attributes=True)  ## permite convertir objetos SQLAlchemy a JSON
     id: int
     nombre: str
     precio: float
-
-    class Config:
-        from_attributes = True ## permite convertir objetos SQLAlchemy a JSON
 
 # GET todos
 @router.get("/", response_model=list[ProductoResponse])
